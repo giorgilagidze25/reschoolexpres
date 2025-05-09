@@ -8,10 +8,6 @@ const postShema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
         require: true
-    },
-       likes: {
-        type: Number,
-        default: 0
     }
 }, {timestamps: true})
 
