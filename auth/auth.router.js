@@ -27,32 +27,33 @@ authRouter.post('/sign-up', async (req, res) => {
     res.status(201).json({message: "user regisgted successfully"})
 
 })
-
-
 authRouter.post('/sign-in', async (req, res) => {
-    const {email, password} = req.body
-    if(!email || !password) {
-        return res.status(400).json({message: 'email and password is required'})
+  try {
+    const { email, password } = req.body
+    if (!email || !password) {
+      return res.status(400).json({ message: 'email and password is required' })
     }
 
-    const existUser = await usersModel.findOne({email}).select('password')
-    if(!existUser){
-        return res.status(400).json({message: 'emial or password is invalid'})
+    const existUser = await usersModel.findOne({ email }).select('password _id')
+    if (!existUser) {
+      return res.status(400).json({ message: 'email or password is invalid' })
     }
 
     const isPassEqual = await bcrypt.compare(password, existUser.password)
-    if(!isPassEqual){
-        return res.status(400).json({message: 'emial or password is invalid'})
+    if (!isPassEqual) {
+      return res.status(400).json({ message: 'email or password is invalid' })
     }
 
-    const payload = {
-        userId: existUser._id
-    }
-
-    const token = await jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '1h'})
+    const payload = { userId: existUser._id }
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' })
 
     res.json(token)
+  } catch (err) {
+    console.error('Sign-in error:', err)
+    res.status(500).json({ message: 'Something went wrong' })
+  }
 })
+
 
 authRouter.get('/current-user', isAuth, async (req, res) => {
     const user = await usersModel.findById(req.userId)
