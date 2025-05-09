@@ -66,6 +66,7 @@ postRouter.put('/:id', async (req, res) => {
     await post.save();
     res.status(200).json({ message: "Post updated successfully" });
 });
+
 postRouter.get('/search/:id', async (req, res) => {
     const { id } = req.params;
 
