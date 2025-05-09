@@ -66,30 +66,6 @@ postRouter.put('/:id', async (req, res) => {
     await post.save();
     res.status(200).json({ message: "Post updated successfully" });
 });
-postRouter.put('/like/:id', async (req, res) => {
-    const { id } = req.params;
-
-    if (!isValidObjectId(id)) {
-        return res.status(400).json({ message: "ID is invalid" });
-    }
-
-    const post = await postsModel.findById(id);
-
-    if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-    }
-
-    if (post.likes && post.likes.includes(req.userId)) {
-        return res.status(400).json({ message: "You have already liked this post" });
-    }
-
-    post.likes = post.likes || [];
-    post.likes.push(req.userId);
-    await post.save();
-
-    res.status(200).json({ message: "Post liked successfully", likes: post.likes.length });
-});
-
 postRouter.get('/search/:id', async (req, res) => {
     const { id } = req.params;
 
