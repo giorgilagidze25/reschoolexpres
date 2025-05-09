@@ -83,5 +83,4 @@ postRouter.get('/search/:id', async (req, res) => {
     res.status(200).json(post);
 });
 
-// კოდს თავიდან დასამერჯად დამჭირდა 
 module.exports = postRouter
