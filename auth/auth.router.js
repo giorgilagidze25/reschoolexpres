@@ -4,23 +4,11 @@ const usersModel = require("../models/users.model");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const isAuth = require("../midelwear/isAuth.midelwear");
-const multer = require('multer');
+
 
 require('dotenv').config()
 
 const authRouter = Router()
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  }
-});
-const upload = multer({ storage });
-
 
 authRouter.post('/sign-up', async (req, res) => {
     const {error} = userSchema.validate(req.body || {})

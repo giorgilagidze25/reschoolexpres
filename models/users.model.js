@@ -11,10 +11,9 @@ const userSchema = new mongoose.Schema({
     },
     password:{
     type: String,
-    require: true,
+    require:true,
     select: false
     },
-      avatar: { type: String,  default: 'default.png' },
     posts:{
         type: [mongoose.Schema.Types.ObjectId],
         ref: 'post',
