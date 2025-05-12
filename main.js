@@ -17,7 +17,6 @@ app.use('/users', isAuth, userRouter)
 app.use('/posts', isAuth, postRouter)
 app.use('/auth', authRouter)
 
-app.use('/uploads', express.static('uploads'))
 app.get('/', (req, res) => {
     res.send('hello word')
 })
