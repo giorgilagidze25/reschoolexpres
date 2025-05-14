@@ -17,6 +17,7 @@ app.use('/users', isAuth, userRouter)
 app.use('/posts', isAuth, postRouter)
 app.use('/auth', authRouter)
 
+
 app.get('/', (req, res) => {
     res.send('hello word')
 })
