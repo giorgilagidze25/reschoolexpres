@@ -8,7 +8,6 @@ require('dotenv').config();
 
 const authRouter = Router();
 
-// REGISTER
 authRouter.post('/sign-up', async (req, res) => {
     const { error } = userSchema.validate(req.body || {});
     if (error) return res.status(400).json(error);
@@ -27,7 +26,6 @@ authRouter.post('/sign-up', async (req, res) => {
     res.status(201).json({ message: "user registered successfully" });
 });
 
-// LOGIN
 authRouter.post('/sign-in', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -49,7 +47,6 @@ authRouter.post('/sign-in', async (req, res) => {
     }
 });
 
-// CURRENT USER
 authRouter.get('/current-user', isAuth, async (req, res) => {
     const user = await usersModel.findById(req.userId).select('-password');
     res.json(user);
