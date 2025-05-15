@@ -95,4 +95,37 @@ postRouter.get('/search/:id', async (req, res) => {
     res.status(200).json(post);
 });
 
+postRouter.post('/:id/comment', isAuth, async (req, res) => {
+  const { id } = req.params;
+  const { text } = req.body;
+
+  if (!text) return res.status(400).json({ message: "Comment text is required" });
+
+  const post = await postsModel.findById(id);
+  if (!post) return res.status(404).json({ message: "Post not found" });
+
+  post.comments.push({ text, author: req.userId });
+  await post.save();
+
+  res.status(201).json({ message: "Comment added successfully", post });
+});
+postRouter.post('/:id/like', isAuth, async (req, res) => {
+  const { id } = req.params;
+
+  const post = await postsModel.findById(id);
+  if (!post) return res.status(404).json({ message: "Post not found" });
+
+  const userId = req.userId;
+  const hasLiked = post.likes.includes(userId);
+
+  if (hasLiked) {
+    post.likes = post.likes.filter(uid => uid.toString() !== userId);
+  } else {
+    post.likes.push(userId);
+  }
+
+  await post.save();
+  res.status(200).json({ message: hasLiked ? 'Like removed' : 'Post liked', likes: post.likes.length });
+});
+
 module.exports = postRouter;
