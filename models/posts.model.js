@@ -9,10 +9,9 @@ const postShema = new mongoose.Schema({
         ref: 'user',
         require: true
     },
-    likes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user'
-    }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+
      comments: [
     {
       text: String,
@@ -23,7 +22,12 @@ const postShema = new mongoose.Schema({
       createdAt: {
         type: Date,
         default: Date.now
-      }
+      },
+      image: {
+        type: String,
+        default: ''
+      },
+     
     }
   ]
 }, {timestamps: true})

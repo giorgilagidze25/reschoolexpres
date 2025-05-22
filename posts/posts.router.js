@@ -3,8 +3,21 @@ const postsModel = require("../models/posts.model");
 const usersModel = require("../models/users.model");
 const { isValidObjectId } = require("mongoose");
 const isAuth = require("../midelwear/isAuth.midelwear");
+const uploads = require("../config/claudinary.config");
 
 const postRouter = Router();
+
+postRouter.post('/', isAuth, uploads.single('image'), async (req, res) => {
+    const { content } = req.body;
+    if (!content) {
+        return res.status(400).json({ message: 'Content is required' });
+    }
+
+    const image = req.file?.path;
+    await postsModel.create({ content, author: req.userId, image });
+
+    res.status(201).json({ message: "Post created successfully" });
+});
 
 postRouter.get('/', async (req, res) => {
     const posts = await postsModel
@@ -15,21 +28,10 @@ postRouter.get('/', async (req, res) => {
     res.status(200).json(posts);
 });
 
-postRouter.post('/', isAuth, async (req, res) => {
-    const { content } = req.body;
-    if (!content) {
-        return res.status(400).json({ message: 'content is required' });
-    }
-
-    await postsModel.create({ content, author: req.userId });
-    res.status(201).json({ message: "post created successfully" });
-});
-
 postRouter.delete('/:id', isAuth, async (req, res) => {
     const postId = req.params.id;
-
     const post = await postsModel.findById(postId);
-    if (!post) return res.status(404).json({ message: "post not found" });
+    if (!post) return res.status(404).json({ message: "Post not found" });
 
     const currentUserId = req.userId;
     const currentUser = await usersModel.findById(currentUserId);
@@ -38,11 +40,11 @@ postRouter.delete('/:id', isAuth, async (req, res) => {
     const isAdmin = currentUser.role === 'admin';
 
     if (!isOwner && !isAdmin) {
-        return res.status(403).json({ message: "you don't have permission" });
+        return res.status(403).json({ message: "You don't have permission" });
     }
 
     await postsModel.findByIdAndDelete(postId);
-    res.json({ message: "post deleted" });
+    res.json({ message: "Post deleted" });
 });
 
 postRouter.put('/:id', isAuth, async (req, res) => {
@@ -69,7 +71,7 @@ postRouter.put('/:id', isAuth, async (req, res) => {
     const isAdmin = currentUser.role === 'admin';
 
     if (!isOwner && !isAdmin) {
-        return res.status(403).json({ message: "You don t have permission to edit this post" });
+        return res.status(403).json({ message: "You don't have permission to edit this post" });
     }
 
     post.content = content;
@@ -77,7 +79,6 @@ postRouter.put('/:id', isAuth, async (req, res) => {
 
     res.status(200).json({ message: "Post updated successfully" });
 });
-
 
 postRouter.get('/search/:id', async (req, res) => {
     const { id } = req.params;
@@ -87,7 +88,6 @@ postRouter.get('/search/:id', async (req, res) => {
     }
 
     const post = await postsModel.findById(id).populate({ path: 'author', select: 'fullName email' });
-
     if (!post) {
         return res.status(404).json({ message: "Post not found" });
     }
@@ -96,36 +96,58 @@ postRouter.get('/search/:id', async (req, res) => {
 });
 
 postRouter.post('/:id/comment', isAuth, async (req, res) => {
-  const { id } = req.params;
-  const { text } = req.body;
+    const { id } = req.params;
+    const { text } = req.body;
 
-  if (!text) return res.status(400).json({ message: "Comment text is required" });
+    if (!text) return res.status(400).json({ message: "Comment text is required" });
 
-  const post = await postsModel.findById(id);
-  if (!post) return res.status(404).json({ message: "Post not found" });
+    const post = await postsModel.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
 
-  post.comments.push({ text, author: req.userId });
-  await post.save();
+    post.comments.push({ text, author: req.userId });
+    await post.save();
 
-  res.status(201).json({ message: "Comment added successfully", post });
+    res.status(201).json({ message: "Comment added successfully", post });
 });
+
 postRouter.post('/:id/like', isAuth, async (req, res) => {
-  const { id } = req.params;
+    const { id } = req.params;
+    const userId = req.userId;
 
-  const post = await postsModel.findById(id);
-  if (!post) return res.status(404).json({ message: "Post not found" });
+    const post = await postsModel.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
 
-  const userId = req.userId;
-  const hasLiked = post.likes.includes(userId);
+    post.dislikes = post.dislikes.filter(uid => uid.toString() !== userId);
 
-  if (hasLiked) {
+    if (post.likes.includes(userId)) {
+        post.likes = post.likes.filter(uid => uid.toString() !== userId);
+        await post.save();
+        return res.status(200).json({ message: "Like removed", likes: post.likes.length, dislikes: post.dislikes.length });
+    } else {
+        post.likes.push(userId);
+        await post.save();
+        return res.status(200).json({ message: "Post liked", likes: post.likes.length, dislikes: post.dislikes.length });
+    }
+});
+
+postRouter.post('/:id/dislike', isAuth, async (req, res) => {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    const post = await postsModel.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
     post.likes = post.likes.filter(uid => uid.toString() !== userId);
-  } else {
-    post.likes.push(userId);
-  }
 
-  await post.save();
-  res.status(200).json({ message: hasLiked ? 'Like removed' : 'Post liked', likes: post.likes.length });
+    if (post.dislikes.includes(userId)) {
+        post.dislikes = post.dislikes.filter(uid => uid.toString() !== userId);
+        await post.save();
+        return res.status(200).json({ message: "Dislike removed", likes: post.likes.length, dislikes: post.dislikes.length });
+    } else {
+        post.dislikes.push(userId);
+        await post.save();
+        return res.status(200).json({ message: "Post disliked", likes: post.likes.length, dislikes: post.dislikes.length });
+    }
 });
 
 module.exports = postRouter;
