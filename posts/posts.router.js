@@ -14,7 +14,7 @@ postRouter.post('/', isAuth, uploads.single('image'), async (req, res) => {
             return res.status(400).json({ message: 'Content is required' });
         }
 
-        console.log("Uploaded file:", req.file); // დაამატე ეს
+        console.log("Uploaded file:", req.file); 
 
         const image = req.file?.path;
         await postsModel.create({ content, author: req.userId, image });

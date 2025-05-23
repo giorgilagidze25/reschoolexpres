@@ -9,6 +9,7 @@ userRouter.get('/', async (req, res) => {
    const users = await usersModel.find().sort({_id: -1})
    res.status(200).json(users)
 })
+
 userRouter.put('/', isAuth, uploads.single('avatar'), async (req, res) => {
   try {
     const id = req.userId;
@@ -19,12 +20,13 @@ userRouter.put('/', isAuth, uploads.single('avatar'), async (req, res) => {
       updateData.avatar = req.file.path;
     }
 
-    await usersModel.findByIdAndUpdate(id, updateData);
-    res.status(200).json({ message: 'User updated successfully' });
+    const updatedUser = await usersModel.findByIdAndUpdate(id, updateData, { new: true });
+    res.status(200).json(updatedUser); 
   } catch (error) {
-    console.error('Error updating user:', error); // ეს დაალოგავს რეალურ შეცდომას
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error updating user:', error); 
+    res.status(500).json({ message: 'User update failed', error: error.message });
   }
 });
+
 
 module.exports= userRouter
