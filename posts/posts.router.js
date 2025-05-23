@@ -8,16 +8,24 @@ const uploads = require("../config/claudinary.config");
 const postRouter = Router();
 
 postRouter.post('/', isAuth, uploads.single('image'), async (req, res) => {
-    const { content } = req.body;
-    if (!content) {
-        return res.status(400).json({ message: 'Content is required' });
+    try {
+        const { content } = req.body;
+        if (!content) {
+            return res.status(400).json({ message: 'Content is required' });
+        }
+
+        console.log("Uploaded file:", req.file); // დაამატე ეს
+
+        const image = req.file?.path;
+        await postsModel.create({ content, author: req.userId, image });
+
+        res.status(201).json({ message: "Post created successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
     }
-
-    const image = req.file?.path;
-    await postsModel.create({ content, author: req.userId, image });
-
-    res.status(201).json({ message: "Post created successfully" });
 });
+
 
 postRouter.get('/', async (req, res) => {
     const posts = await postsModel
@@ -94,17 +102,17 @@ postRouter.get('/search/:id', async (req, res) => {
 
     res.status(200).json(post);
 });
-
-postRouter.post('/:id/comment', isAuth, async (req, res) => {
+postRouter.post('/:id/comment', isAuth, uploads.single('image'), async (req, res) => {
     const { id } = req.params;
     const { text } = req.body;
+    const image = req.file?.path || '';
 
     if (!text) return res.status(400).json({ message: "Comment text is required" });
 
     const post = await postsModel.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    post.comments.push({ text, author: req.userId });
+    post.comments.push({ text, author: req.userId, image });
     await post.save();
 
     res.status(201).json({ message: "Comment added successfully", post });

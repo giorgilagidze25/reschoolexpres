@@ -9,21 +9,26 @@ require('dotenv').config();
 const authRouter = Router();
 
 authRouter.post('/sign-up', async (req, res) => {
-    const { error } = userSchema.validate(req.body || {});
-    if (error) return res.status(400).json(error);
+    try {
+        const { error } = userSchema.validate(req.body || {});
+        if (error) return res.status(400).json(error);
 
-    const { fullName, email, password } = req.body;
+        const { fullName, email, password } = req.body;
 
-    const existUser = await usersModel.findOne({ email });
-    if (existUser) return res.status(400).json({ message: 'user already exists' });
+        const existUser = await usersModel.findOne({ email });
+        if (existUser) return res.status(400).json({ message: 'user already exists' });
 
-    const hashedPass = await bcrypt.hash(password, 10);
+        const hashedPass = await bcrypt.hash(password, 10);
 
-    const role = email === "admin12@gmail.com" && password === "admin12" ? "admin" : "user";
+        const role = (email === "admin12@gmail.com") ? "admin" : "user";
 
-    await usersModel.create({ fullName, email, password: hashedPass, role });
+        await usersModel.create({ fullName, email, password: hashedPass, role });
 
-    res.status(201).json({ message: "user registered successfully" });
+        res.status(201).json({ message: "user registered successfully" });
+    } catch (err) {
+        console.error('Sign-up error:', err);
+        res.status(500).json({ message: 'Something went wrong' });
+    }
 });
 
 authRouter.post('/sign-in', async (req, res) => {
@@ -31,7 +36,7 @@ authRouter.post('/sign-in', async (req, res) => {
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ message: 'email and password are required' });
 
-        const existUser = await usersModel.findOne({ email }).select('password _id role');
+        const existUser = await usersModel.findOne({ email }).select('+password _id role');
         if (!existUser) return res.status(400).json({ message: 'email or password is invalid' });
 
         const isPassEqual = await bcrypt.compare(password, existUser.password);
@@ -40,7 +45,7 @@ authRouter.post('/sign-in', async (req, res) => {
         const payload = { userId: existUser._id, role: existUser.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.json(token);
+        res.json({ token, role: existUser.role, userId: existUser._id });
     } catch (err) {
         console.error('Sign-in error:', err);
         res.status(500).json({ message: 'Something went wrong' });

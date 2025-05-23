@@ -9,6 +9,10 @@ const postShema = new mongoose.Schema({
         ref: 'user',
         require: true
     },
+        image: {
+        type: String,
+        default: ''
+    },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
     dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
 

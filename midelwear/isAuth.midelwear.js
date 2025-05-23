@@ -1,21 +1,23 @@
-const jwt = require('jsonwebtoken')
-require('dotenv').config()
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const isAuth = async (req, res, next) => {
-    const headers = req.headers['authorization']
-    if(!headers) {
-        return res.status(401).json({message: "you dont have permition"})
+const isAuth = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+        return res.status(401).json({ message: "You don't have permission" });
     }
-
-    const [type, token] = headers.split(' ')
-    try{
-        const payload = await jwt.verify(token, process.env.JWT_SECRET)
-        req.userId = payload.userId
-        req.role = payload.role; 
-        next()
-    }catch(e){
-        return res.status(401).json({message: "you dont have permition"})
+    const [type, token] = authHeader.split(' ');
+    if (type !== 'Bearer' || !token) {
+        return res.status(401).json({ message: "You don't have permission" });
     }
-}
+    try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = payload.userId;
+        req.role = payload.role;
+        next();
+    } catch (e) {
+        return res.status(401).json({ message: "You don't have permission" });
+    }
+};
 
-module.exports = isAuth
+module.exports = isAuth;
