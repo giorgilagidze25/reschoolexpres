@@ -6,7 +6,6 @@ const isAuth = require("../midelwear/isAuth.midelwear");
 const uploads = require("../config/claudinary.config");
 
 const postRouter = Router();
-
 postRouter.post('/', isAuth, uploads.single('image'), async (req, res) => {
     try {
         const { content } = req.body;
@@ -14,17 +13,17 @@ postRouter.post('/', isAuth, uploads.single('image'), async (req, res) => {
             return res.status(400).json({ message: 'Content is required' });
         }
 
-        console.log("Uploaded file:", req.file); 
+        const image = req.file?.path || '';
 
-        const image = req.file?.path;
-        await postsModel.create({ content, author: req.userId, image });
+        const newPost = await postsModel.create({ content, author: req.userId, image });
 
-        res.status(201).json({ message: "Post created successfully" });
+        res.status(201).json({ message: "Post created successfully", post: newPost });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+        console.error('Error creating post:', err);
+        res.status(500).json({ message: "Server error", error: err.message });
     }
 });
+
 
 
 postRouter.get('/', async (req, res) => {
