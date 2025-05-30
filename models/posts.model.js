@@ -1,39 +1,52 @@
 const { default: mongoose } = require("mongoose");
 
-const postShema = new mongoose.Schema({
-    content: {
-        type: String
-    },
-    author: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        require: true
-    },
-        image: {
-        type: String,
-        default: ''
-    },
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-    dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+const commentSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: true
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  image: {
+    type: String,
+    default: ''
+  }
+});
 
-     comments: [
+const postSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    required: true
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true
+  },
+  image: {
+    type: String,
+    default: ''
+  },
+  likes: [
     {
-      text: String,
-      author: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user'
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      },
-      image: {
-        type: String,
-        default: ''
-      },
-     
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user"
     }
-  ]
-}, {timestamps: true})
+  ],
+  dislikes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user"
+    }
+  ],
+  comments: [commentSchema]
+}, { timestamps: true });
 
-module.exports = mongoose.model('post', postShema)
+module.exports = mongoose.model("post", postSchema);

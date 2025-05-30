@@ -9,21 +9,20 @@ userRouter.get('/', async (req, res) => {
    const users = await usersModel.find().sort({_id: -1})
    res.status(200).json(users)
 })
-
 userRouter.put('/', isAuth, uploads.single('avatar'), async (req, res) => {
   try {
     const id = req.userId;
-    const { email } = req.body;
+    const { email, fullName } = req.body;
 
-    const updateData = { email };
-    if (req.file?.path) {
-      updateData.avatar = req.file.path;
-    }
+    const updateData = {};
+    if (email) updateData.email = email;
+    if (fullName) updateData.fullName = fullName;
+    if (req.file?.path) updateData.avatar = req.file.path;
 
     const updatedUser = await usersModel.findByIdAndUpdate(id, updateData, { new: true });
-    res.status(200).json(updatedUser); 
+    res.status(200).json(updatedUser);
   } catch (error) {
-    console.error('Error updating user:', error); 
+    console.error('Error updating user:', error);
     res.status(500).json({ message: 'User update failed', error: error.message });
   }
 });
