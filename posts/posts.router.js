@@ -6,18 +6,37 @@ const isAuth = require("../midelwear/isAuth.midelwear");
 const uploads = require("../config/claudinary.config");
 
 const postRouter = Router();
+
+postRouter.post('/', isAuth, uploads.single('image'), async (req, res) => {
+  try {
+    const { content } = req.body;
+    const image = req.file?.path || '';
+
+    if (!content) return res.status(400).json({ message: "Content is required" });
+
+    const newPost = await postsModel.create({
+      content,
+      author: req.userId,
+      image
+    });
+
+    res.status(201).json({ message: "Post created successfully", post: newPost });
+  } catch (err) {
+    console.error('Error creating post:', err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+
 postRouter.get('/', async (req, res) => {
   try {
     const sortType = req.query.type;
 
-    // Default sorting - ახალი პოსტები პირველ რიგში
     let sortCriteria = { createdAt: -1 };
 
     if (sortType === 'most') {
-      // პოპულარობის მიხედვით კლებადობით (ლაიქები - დისლაიქები)
       sortCriteria = { popularityScore: -1 };
     } else if (sortType === 'least') {
-      // პოპულარობის მიხედვით ზრდადობით
       sortCriteria = { popularityScore: 1 };
     }
 
@@ -74,7 +93,6 @@ postRouter.delete('/:id', isAuth, async (req, res) => {
   }
 });
 
-// UPDATE post by ID (auth required)
 postRouter.put('/:id', isAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -105,7 +123,6 @@ postRouter.put('/:id', isAuth, async (req, res) => {
   }
 });
 
-// GET single post by ID
 postRouter.get('/search/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -129,7 +146,6 @@ postRouter.get('/search/:id', async (req, res) => {
   }
 });
 
-// ADD comment to post (auth required)
 postRouter.post('/:id/comment', isAuth, uploads.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -156,7 +172,6 @@ postRouter.post('/:id/comment', isAuth, uploads.single('image'), async (req, res
   }
 });
 
-// LIKE post (auth required)
 postRouter.post('/:id/like', isAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -169,11 +184,9 @@ postRouter.post('/:id/like', isAuth, async (req, res) => {
     const post = await postsModel.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    // Remove userId from dislikes if exists
     post.dislikes = post.dislikes.filter(uid => uid.toString() !== userId);
 
     if (post.likes.includes(userId)) {
-      // If already liked, remove like
       post.likes = post.likes.filter(uid => uid.toString() !== userId);
       await post.save();
       return res.status(200).json({
@@ -182,7 +195,6 @@ postRouter.post('/:id/like', isAuth, async (req, res) => {
         dislikes: post.dislikes.length
       });
     } else {
-      // Add like
       post.likes.push(userId);
       await post.save();
       return res.status(200).json({
@@ -198,7 +210,6 @@ postRouter.post('/:id/like', isAuth, async (req, res) => {
   }
 });
 
-// DISLIKE post (auth required)
 postRouter.post('/:id/dislike', isAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -211,11 +222,9 @@ postRouter.post('/:id/dislike', isAuth, async (req, res) => {
     const post = await postsModel.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    // Remove userId from likes if exists
     post.likes = post.likes.filter(uid => uid.toString() !== userId);
 
     if (post.dislikes.includes(userId)) {
-      // If already disliked, remove dislike
       post.dislikes = post.dislikes.filter(uid => uid.toString() !== userId);
       await post.save();
       return res.status(200).json({
@@ -224,7 +233,6 @@ postRouter.post('/:id/dislike', isAuth, async (req, res) => {
         dislikes: post.dislikes.length
       });
     } else {
-      // Add dislike
       post.dislikes.push(userId);
       await post.save();
       return res.status(200).json({
